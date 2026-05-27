@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Thinkers Café — Digital Menu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f5f3ee;min-height:100vh;display:flex;justify-content:center}
+.app{background:#fafaf8;color:#1a1a1a;width:100%;max-width:480px;min-height:100vh;position:relative;overflow-x:hidden}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;opacity:0;pointer-events:none;transition:opacity .28s}
+.overlay.open{opacity:1;pointer-events:all}
+
+/* PANEL */
+.panel{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-105%);width:100%;max-width:480px;background:#fff;z-index:110;border-radius:0 0 22px 22px;max-height:92vh;overflow-y:auto;transition:transform .32s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 40px rgba(0,0,0,.15)}
+.panel.open{transform:translateX(-50%) translateY(0)}
+.panel-pill{width:36px;height:4px;background:#e0ddd8;border-radius:99px;margin:12px auto 0}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 0}
+.panel-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#1a1a1a}
+.panel-close{width:32px;height:32px;border-radius:50%;background:#f2efe8;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#6b6560}
+.panel-body{padding:18px 20px 32px;display:flex;flex-direction:column;gap:18px}
+
+/* BUSINESS PANEL */
+.b-section-lbl{font-size:10px;font-weight:600;color:#c8963e;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.b-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:.5px solid #f0ede6}
+.b-row:last-child{border-bottom:none}
+.b-ico{width:34px;height:34px;background:#faf7f0;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.b-lbl{font-size:10px;color:#8a8580}
+.b-val{font-size:13px;font-weight:500;color:#1a1a1a}
+.wifi-tag{font-family:monospace;font-size:12px;background:#f2efe8;padding:2px 8px;border-radius:6px;letter-spacing:.06em}
+.soc-row{display:flex;gap:8px;flex-wrap:wrap}
+.soc-btn{font-size:12px;font-weight:500;padding:7px 14px;border-radius:20px;background:#f2efe8;color:#1a1a1a;border:none;cursor:pointer}
+
+/* ADMIN PANEL */
+.admin-tabs{display:flex;background:#f2efe8;border-radius:12px;padding:3px;gap:3px;margin-bottom:4px;flex-wrap:wrap}
+.atab{flex:1;min-width:0;padding:7px 2px;border-radius:10px;border:none;background:none;font-size:10px;font-weight:600;color:#8a8580;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .18s;white-space:nowrap}
+.atab.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.admin-section{display:none}.admin-section.active{display:block}
+.form-group{margin-bottom:12px}
+.form-label{font-size:11px;font-weight:600;color:#6b6560;margin-bottom:5px;display:block;letter-spacing:.03em}
+.form-input{width:100%;padding:10px 13px;background:#f5f3ee;border:1.5px solid transparent;border-radius:10px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:#c8963e;background:#fff}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* CATEGORY ADMIN */
+.cat-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.cat-admin-item{background:#f5f3ee;border-radius:10px;padding:10px 12px}
+.cat-admin-row{display:flex;align-items:center;gap:8px}
+.cat-drag{font-size:18px;color:#c0bbb5;cursor:grab;flex-shrink:0}
+.cat-name-input{flex:1;background:none;border:none;font-size:13px;font-weight:600;color:#1a1a1a;font-family:'Plus Jakarta Sans',sans-serif;outline:none;min-width:0}
+.cat-sub-row{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:.5px solid #e4e0d8}
+.cat-lang-input{flex:1;background:#fff;border:.5px solid #e4e0d8;border-radius:7px;padding:5px 8px;font-size:11px;color:#6b6560;outline:none;min-width:0}
+.del-btn{width:28px;height:28px;border-radius:50%;background:#fee2e2;color:#991b1b;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.add-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:10px;border:1.5px dashed #d4cfc8;background:none;color:#6b6560;font-size:13px;font-weight:500;cursor:pointer;width:100%;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.add-btn:hover{border-color:#c8963e;color:#c8963e}
+
+/* ITEM ADMIN */
+.item-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.item-admin-card{background:#f5f3ee;border-radius:12px;padding:12px 14px}
+.item-admin-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.item-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e4e0d8}
+.item-admin-name{font-size:13px;font-weight:600;color:#1a1a1a}
+.item-admin-cat{font-size:11px;color:#8a8580}
+.item-expand-btn{margin-left:auto;width:28px;height:28px;border-radius:50%;background:#fff;border:.5px solid #e4e0d8;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b6560;flex-shrink:0;transition:transform .2s}
+.item-expand-btn.open{transform:rotate(180deg)}
+.item-admin-form{display:none;border-top:.5px solid #e4e0d8;padding-top:10px;margin-top:4px}
+.item-admin-form.open{display:block}
+.cat-sel{width:100%;padding:9px 13px;background:#fff;border:1.5px solid #e4e0d8;border-radius:10px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none}
+.save-btn{width:100%;padding:11px;border-radius:10px;background:#1a1a1a;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:10px;transition:opacity .18s}
+.save-btn:active{opacity:.75}
+.save-btn.amber{background:#c8963e}
+.danger-btn{width:100%;padding:10px;border-radius:10px;background:#fee2e2;color:#991b1b;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:6px}
+.form-input:disabled{opacity:.45;cursor:not-allowed}
+
+/* PHOTO UPLOAD */
+.photo-upload-area{border:2px dashed #d4cfc8;border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:10px;position:relative}
+.photo-upload-area:hover{border-color:#c8963e}
+.photo-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-preview-wrap{position:relative;display:inline-block;margin-bottom:10px}
+.photo-preview{width:100%;height:140px;object-fit:cover;border-radius:10px;display:block}
+.photo-remove-btn{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.upload-icon{font-size:28px;display:block;margin-bottom:6px;color:#c0bbb5}
+.upload-text{font-size:12px;color:#8a8580}
+.upload-sub{font-size:10px;color:#b0aba6;margin-top:2px}
+
+/* HEADER */
+.hdr{background:#fafaf8;border-bottom:.5px solid #ede9e0;padding:13px 16px 0;position:sticky;top:0;z-index:50}
+.htop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.logo-btn{display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:0}
+.logo-mark{width:42px;height:42px;border-radius:11px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#c8963e;transition:transform .18s;flex-shrink:0}
+.logo-btn:active .logo-mark{transform:scale(.93)}
+.logo-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:#1a1a1a;line-height:1.1}
+.logo-tag{font-size:10px;color:#8a8580}
+.hdr-right{display:flex;align-items:center;gap:7px}
+.gear-btn{width:28px;height:28px;border-radius:8px;background:#f2efe8;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b6560;transition:all .18s;flex-shrink:0}
+.gear-btn:hover{background:#e4e0d8;color:#1a1a1a}
+.lang-tgl{display:flex;align-items:center;background:#1a1a1a;border-radius:20px;padding:2px;gap:0}
+.lang-seg{padding:4px 9px;border-radius:18px;font-size:10px;font-weight:600;color:#8a8580;transition:all .2s;cursor:pointer;background:none;border:none;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap}
+.lang-seg.active{background:#c8963e;color:#fff}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#aaa;pointer-events:none;font-size:15px}
+.search-box{width:100%;padding:11px 14px 11px 40px;background:#f2efe8;border:1.5px solid transparent;border-radius:13px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none;transition:border-color .2s,background .2s}
+.search-box:focus{background:#fff;border-color:#c8963e}
+.search-box::placeholder{color:#b0aba6}
+.cats-row{display:flex;flex-wrap:wrap;gap:7px;padding-bottom:12px}
+.cchip{padding:7px 16px;border-radius:22px;background:#f0ede6;border:1.5px solid transparent;font-size:13px;font-weight:600;color:#6b6560;cursor:pointer;transition:all .18s;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif}
+.cchip.active{background:#1a1a1a;color:#fff}
+.cchip:active{transform:scale(.95)}
+
+/* FILTER BAR */
+.fbar{padding:10px 16px 9px;background:#fafaf8;border-bottom:.5px solid #ede9e0}
+.brow{display:flex;gap:7px;overflow-x:auto;margin-bottom:9px;scrollbar-width:none}
+.brow::-webkit-scrollbar{display:none}
+.bchip{flex-shrink:0;padding:6px 14px;border-radius:20px;background:#f0ede6;border:1.5px solid transparent;font-size:12px;font-weight:500;color:#6b6560;cursor:pointer;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif}
+.bchip.active{background:#faf0da;color:#7a4e10;border-color:#c8963e}
+.tool-row{display:flex;justify-content:space-between;align-items:center}
+.view-btns{display:flex;gap:5px}
+.vbtn{width:32px;height:32px;border-radius:8px;background:#f0ede6;border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:#6b6560;transition:all .18s}
+.vbtn.active{background:#1a1a1a;color:#fff}
+.sort-sel{padding:6px 24px 6px 10px;border-radius:8px;background:#f0ede6;border:none;font-size:11px;font-weight:500;color:#1a1a1a;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8580' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+
+/* MENU CARDS */
+.rcount{padding:8px 16px 4px;font-size:11px;color:#8a8580}
+.gwrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 16px 32px}
+.lwrap{display:flex;flex-direction:column;gap:10px;padding:8px 16px 32px}
+.gc{background:#fff;border-radius:14px;overflow:hidden;border:.5px solid #ede9e0;cursor:pointer;transition:transform .18s;animation:fu .3s ease both}
+.gc:active{transform:scale(.97)}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.gc:nth-child(1){animation-delay:0ms}.gc:nth-child(2){animation-delay:35ms}.gc:nth-child(3){animation-delay:70ms}.gc:nth-child(4){animation-delay:105ms}.gc:nth-child(5){animation-delay:140ms}.gc:nth-child(6){animation-delay:175ms}
+.giw{position:relative;padding-top:70%;overflow:hidden;background:#f2efe8}
+.gi{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .35s}
+.gc:hover .gi{transform:scale(1.05)}
+.gptag{position:absolute;bottom:7px;right:7px;background:rgba(26,26,26,.82);color:#fff;font-size:9px;font-weight:600;padding:3px 8px;border-radius:20px}
+.gbody{padding:9px 10px 11px}
+.gname{font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:3px;line-height:1.3}
+.gdesc{font-size:10px;color:#8a8580;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:7px}
+.gfoot{display:flex;justify-content:space-between;align-items:center}
+.gprice{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#1a1a1a}
+.getb{font-size:9px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;color:#8a8580;margin-left:1px}
+.gstar{font-size:10px;color:#8a8580;display:flex;align-items:center;gap:2px}
+.star-c{color:#c8963e}
+.lc{background:#fff;border-radius:14px;overflow:hidden;border:.5px solid #ede9e0;display:flex;flex-direction:column;animation:fu .3s ease both;cursor:pointer;transition:transform .18s}
+.lc:active{transform:scale(.98)}
+.lc:nth-child(1){animation-delay:0ms}.lc:nth-child(2){animation-delay:45ms}.lc:nth-child(3){animation-delay:90ms}.lc:nth-child(4){animation-delay:135ms}
+.liw{width:100%;height:190px;flex-shrink:0;overflow:hidden;background:#f2efe8;position:relative}
+.limg{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.lc:hover .limg{transform:scale(1.04)}
+.l-price-tag{position:absolute;bottom:10px;right:10px;background:rgba(26,26,26,.82);color:#fff;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;font-family:'Cormorant Garamond',serif}
+.l-cat-tag-img{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.88);color:#1a1a1a;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;backdrop-filter:blur(4px)}
+.lbody{flex:1;padding:12px 14px 14px;display:flex;flex-direction:column;justify-content:space-between}
+.lname{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px}
+.ldesc{font-size:12px;color:#8a8580;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
+.lfoot{display:flex;justify-content:space-between;align-items:center}
+.lprice{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#1a1a1a}
+.letb{font-size:10px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;color:#8a8580;margin-left:2px}
+.lcat-tag{font-size:10px;background:#f0ede6;color:#6b6560;padding:3px 8px;border-radius:20px;font-weight:500}
+.sk{background:linear-gradient(90deg,#f2efe8 25%,#e8e4dc 50%,#f2efe8 75%);background-size:200% 100%;animation:shim 1.5s infinite}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skl{height:10px;border-radius:5px;margin-bottom:6px}
+.empty{padding:48px 20px;text-align:center;color:#8a8580;font-size:14px}
+.empty span{font-size:40px;display:block;margin-bottom:12px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:300;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* PASSWORD MODAL */
+.pw-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.pw-modal-bg.open{opacity:1;pointer-events:all}
+.pw-modal{background:#fff;border-radius:20px;padding:28px 24px 24px;width:88%;max-width:340px;box-shadow:0 12px 48px rgba(0,0,0,.18);animation:popIn .25s cubic-bezier(.4,0,.2,1)}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.pw-icon{width:52px;height:52px;background:#f2efe8;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px}
+.pw-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:4px}
+.pw-sub{font-size:12px;color:#8a8580;text-align:center;margin-bottom:18px}
+.pw-input-wrap{position:relative;margin-bottom:10px}
+.pw-input{width:100%;padding:12px 44px 12px 14px;background:#f5f3ee;border:1.5px solid transparent;border-radius:12px;font-size:16px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none;letter-spacing:.12em;transition:border-color .2s}
+.pw-input:focus{border-color:#c8963e;background:#fff}
+.pw-input.error{border-color:#ef4444;background:#fff5f5}
+.pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:17px;color:#8a8580;padding:4px}
+.pw-error{font-size:12px;color:#ef4444;text-align:center;min-height:18px;margin-bottom:8px}
+.pw-submit{width:100%;padding:12px;border-radius:12px;background:#1a1a1a;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:opacity .18s}
+.pw-submit:active{opacity:.75}
+.pw-cancel{width:100%;padding:10px;border-radius:12px;background:none;color:#8a8580;border:none;font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+<div class="toast" id="toast"></div>
+
+<!-- PASSWORD MODAL -->
+<div class="pw-modal-bg" id="pwModalBg">
+  <div class="pw-modal">
+    <div class="pw-icon">⚙️</div>
+    <div class="pw-title">Admin Access</div>
+    <div class="pw-sub">Enter your password to continue</div>
+    <div class="pw-input-wrap">
+      <input class="pw-input" id="pwInput" type="password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')submitPw()"
+        oninput="document.getElementById('pwInput').classList.remove('error');document.getElementById('pwErr').textContent=''"/>
+      <button class="pw-eye" id="pwEye" onclick="togglePwEye()">👁</button>
+    </div>
+    <div class="pw-error" id="pwErr"></div>
+    <button class="pw-submit" onclick="submitPw()">Unlock Admin Panel</button>
+    <button class="pw-cancel" onclick="closePwModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- BUSINESS INFO PANEL -->
+<div class="panel" id="bizPanel">
+  <div class="panel-pill"></div>
+  <div class="panel-head">
+    <div class="panel-title" id="biz-panel-name">Thinkers Café</div>
+    <button class="panel-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="panel-body">
+    <div><div class="b-section-lbl">Business Hours</div><div id="biz-hours-display"></div></div>
+    <div>
+      <div class="b-section-lbl">Contact</div>
+      <div class="b-row"><div class="b-ico">📞</div><div><div class="b-lbl">Phone</div><div class="b-val" id="biz-phone-d">+251 911 234 567</div></div></div>
+      <div class="b-row"><div class="b-ico">📍</div><div><div class="b-lbl">Address</div><div class="b-val" id="biz-address-d">Bole Road, near Atlas Hotel</div></div></div>
+    </div>
+    <div>
+      <div class="b-section-lbl">Wi-Fi</div>
+      <div class="b-row"><div class="b-ico">📶</div><div>
+        <div class="b-lbl">Network</div><div class="b-val" id="biz-wifi-name-d">Thinkers_Guest</div>
+        <div class="b-lbl" style="margin-top:5px">Password</div><div class="wifi-tag" id="biz-wifi-pw-d">thinkers2024</div>
+      </div></div>
+    </div>
+    <div><div class="b-section-lbl">Follow Us</div><div class="soc-row" id="biz-socials-d"></div></div>
+    <div><div class="b-section-lbl">About</div><div style="font-size:13px;color:#6b6560;line-height:1.6" id="biz-about-d">Experience the finest blend of technology and caffeine.</div></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="panel" id="adminPanel">
+  <div class="panel-pill"></div>
+  <div class="panel-head">
+    <div class="panel-title">⚙️ Admin Panel</div>
+    <button class="panel-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="admin-tabs">
+      <button class="atab active" onclick="switchTab('biz')">Business</button>
+      <button class="atab" onclick="switchTab('cats')">Categories</button>
+      <button class="atab" onclick="switchTab('items')">Items</button>
+      <button class="atab" onclick="switchTab('prices')">Prices</button>
+      <button class="atab" onclick="switchTab('ratings')">Ratings</button>
+    </div>
+
+    <!-- TAB: Business -->
+    <div class="admin-section active" id="tab-biz">
+      <div class="form-group"><label class="form-label">Restaurant Name</label><input class="form-input" id="a-name" placeholder="e.g. Thinkers Café"/></div>
+      <div class="form-group"><label class="form-label">Tagline</label><input class="form-input" id="a-tagline" placeholder="e.g. Technology & Caffeine"/></div>
+      <div class="form-group"><label class="form-label">About / Description</label><input class="form-input" id="a-about" placeholder="Short description"/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="a-phone" placeholder="+251..."/></div>
+        <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="a-address"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Wi-Fi Name</label><input class="form-input" id="a-wifi-name"/></div>
+        <div class="form-group"><label class="form-label">Wi-Fi Password</label><input class="form-input" id="a-wifi-pw"/></div>
+      </div>
+      <div class="b-section-lbl" style="margin-bottom:8px">Business Hours</div>
+      <div id="hours-editor"></div>
+      <div class="b-section-lbl" style="margin:12px 0 8px">Social Links</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Instagram URL</label><input class="form-input" id="a-ig"/></div>
+        <div class="form-group"><label class="form-label">Facebook URL</label><input class="form-input" id="a-fb"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">TikTok URL</label><input class="form-input" id="a-tt"/></div>
+      <button class="save-btn" onclick="saveBiz()">Save Business Info</button>
+    </div>
+
+    <!-- TAB: Categories -->
+    <div class="admin-section" id="tab-cats">
+      <div class="cat-list" id="admin-cat-list"></div>
+      <button class="add-btn" onclick="addCat()">＋ Add Category</button>
+      <button class="save-btn" style="margin-top:12px" onclick="saveCats()">Save Categories</button>
+    </div>
+
+    <!-- TAB: Menu Items -->
+    <div class="admin-section" id="tab-items">
+      <button class="add-btn" onclick="addItem()" style="margin-bottom:12px">＋ Add New Item</button>
+      <div class="item-list" id="admin-item-list"></div>
+    </div>
+
+    <!-- TAB: Price Ranges -->
+    <div class="admin-section" id="tab-prices">
+      <div style="font-size:12px;color:#8a8580;margin-bottom:14px;line-height:1.5">
+        Edit the price filter chips shown to customers. Set the label and min/max ETB values for each range.
+      </div>
+      <div id="price-range-editor"></div>
+      <button class="add-btn" onclick="addPriceRange()" style="margin-bottom:12px">＋ Add Price Range</button>
+      <button class="save-btn" onclick="savePriceRanges()">Save Price Ranges</button>
+    </div>
+
+    <!-- TAB: Ratings -->
+    <div class="admin-section" id="tab-ratings">
+      <div style="font-size:12px;color:#8a8580;margin-bottom:14px;line-height:1.5">
+        Edit or delete item ratings. Changes apply instantly to the menu.
+      </div>
+      <div id="ratings-editor"></div>
+      <button class="save-btn" style="margin-top:4px" onclick="saveAllRatings()">Save All Ratings</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="htop">
+    <button class="logo-btn" onclick="openBiz()">
+      <div class="logo-mark" id="hdr-logo-char">T</div>
+      <div>
+        <div class="logo-name" id="hdr-name">Thinkers Café</div>
+        <div class="logo-tag">Tap for info &amp; Wi-Fi 📶</div>
+      </div>
+    </button>
+    <div class="hdr-right">
+      <button class="gear-btn" onclick="openAdmin()" title="Admin Panel">⚙</button>
+      <div class="lang-tgl" id="langTgl">
+        <button class="lang-seg active" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-seg" data-lang="am" onclick="setLang('am')" style="font-family:'Noto Sans Ethiopic',sans-serif">አማ</button>
+        <button class="lang-seg" data-lang="or" onclick="setLang('or')">OM</button>
+      </div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <span class="search-ico">🔍</span>
+    <input class="search-box" id="searchBox" type="text" placeholder="Search coffee, tea, bakery…" oninput="handleSearch(this.value)"/>
+  </div>
+  <div class="cats-row" id="catsRow"></div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="fbar">
+  <div class="brow" id="budgetRow"></div>
+  <div class="tool-row">
+    <div class="view-btns">
+      <button class="vbtn active" id="vG" onclick="setView('grid')" title="Grid">▦</button>
+      <button class="vbtn" id="vL" onclick="setView('list')" title="List">≡</button>
+    </div>
+    <select class="sort-sel" id="sortSel" onchange="applySort(this.value)">
+      <option value="default">Default</option>
+      <option value="price_asc">Price: Low → High</option>
+      <option value="price_desc">Price: High → Low</option>
+      <option value="rating">Top Rated</option>
+    </select>
+  </div>
+</div>
+
+<div class="rcount" id="rcount"></div>
+<div id="menuWrap"></div>
+</div>
+
+<script>
+// ══ STATE ══
+const ADMIN_PW = '11199719';
+let pwVisible = false;
+
+let BIZ = {
+  name:'Thinkers Café', tagline:'Technology & Caffeine',
+  about:'Experience the finest blend of technology and caffeine.',
+  phone:'+251 911 234 567', address:'Bole Road, near Atlas Hotel',
+  wifiName:'Thinkers_Guest', wifiPw:'thinkers2024',
+  hours:[
+    {day:'Mon – Fri', open:'7:00 AM', close:'10:00 PM'},
+    {day:'Saturday',  open:'8:00 AM', close:'11:00 PM'},
+    {day:'Sunday',    open:'9:00 AM', close:'9:00 PM'},
+  ],
+  ig:'', fb:'', tt:''
+};
+
+let CATS = [
+  {key:'all',   en:'All',         am:'ሁሉም',        or:'Hunda'},
+  {key:'coffee',en:'Coffee',      am:'ቡና',          or:'Bunaa'},
+  {key:'burger',en:'Burger',      am:'በርገር',        or:'Baargara'},
+  {key:'juice', en:'Juice',       am:'ጭማቂ',        or:'Jiisii'},
+  {key:'soda',  en:'Soda Drinks', am:'ለስላሳ',       or:'Dhugaatii'},
+  {key:'meat',  en:'Meat Dishes', am:'የስጋ ምግቦች',  or:'Foon'},
+];
+
+let MENU = [
+  {id:1,cat:'coffee',price:85,rating:4.8,img:'https://images.unsplash.com/photo-1610889556528-9a770e32642f?w=400&q=75',
+    en:{name:'Ethiopian Macchiato',desc:'Bold espresso with silky foam — the classic Addis style.'},
+    am:{name:'የኢትዮጵያ ማኪያቶ',desc:'ጠንካራ ኤስፕሬሶ ከቀጭን አረፋ ጋር፣ የአዲስ አበባ ዘይቤ።'},
+    or:{name:'Maakiyaatoo Itoophiyaa',desc:'Espresso jabaataa fi hadhaa qabuu fi hoo\'aa muldhuu — haala Addis Ababa.'}},
+  {id:2,cat:'coffee',price:120,rating:4.7,img:'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&q=75',
+    en:{name:'Cappuccino',desc:'Rich espresso with steamed milk and velvety foam.'},
+    am:{name:'ካፑቺኖ',desc:'ሀብታም ኤስፕሬሶ ከሙቅ ወተት እና ወፍራም አረፋ ጋር።'},
+    or:{name:'Kappuchiinoo',desc:'Espresso ballaa mi\'eessaa fi hadhaa mi\'aa qabuu.'}},
+  {id:3,cat:'coffee',price:150,rating:4.9,img:'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=75',
+    en:{name:'Caramel Latte',desc:'Smooth espresso with steamed milk and house caramel swirl.'},
+    am:{name:'ካራሜል ላቴ',desc:'ስሙዝ ኤስፕሬሶ ከሙቅ ወተት እና ካራሜል ጣፋጭ ጋር።'},
+    or:{name:'Laate Karaameelii',desc:'Espresso mi\'aawaa fi mi\'eessaa karaameelii wajjin.'}},
+  {id:4,cat:'burger',price:280,rating:4.6,img:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=75',
+    en:{name:'Classic Smash Burger',desc:'Double beef patty, cheddar, pickles and house sauce on brioche.'},
+    am:{name:'ክላሲክ ስማሽ በርገር',desc:'ድርብ የበሬ ፓቲ፣ ቼዳር፣ ፒክልስ እና የቤት ሶስ።'},
+    or:{name:'Baargara Klaasik',desc:'Foon lama, chedar, fi soosiitii manaa wajjin.'}},
+  {id:5,cat:'burger',price:320,rating:4.8,img:'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&q=75',
+    en:{name:'Spicy Crispy Chicken',desc:'Golden fried fillet with jalapeño mayo and fresh coleslaw.'},
+    am:{name:'ቅመማ ክሪስፒ ዶሮ',desc:'ወርቃማ ዶሮ ፊሌት ከጃላፔኖ ማዮ እና ኮልስሎ ጋር።'},
+    or:{name:'Laafu Qameessa Doroo',desc:'Filleetii laamuu mi\'aa jalapeño fi kolesloo tazariin.'}},
+  {id:6,cat:'juice',price:95,rating:4.5,img:'https://images.unsplash.com/photo-1534353473418-4cfa0a52aea6?w=400&q=75',
+    en:{name:'Mango Fusion',desc:'Fresh Dire Dawa mangoes blended with lime and mint.'},
+    am:{name:'ማንጎ ፊዥን',desc:'ትኩስ ማንጎ ከሎሚ እና ናና ጋር ተቀላቅሏል።'},
+    or:{name:'Maangoo Fuuziyoon',desc:'Maangoo Dirree Dawwaa mi\'aa liimuu fi naanaa wajjin.'}},
+  {id:7,cat:'juice',price:80,rating:4.4,img:'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=75',
+    en:{name:'Avocado Smoothie',desc:'Creamy Ethiopian avocado with honey and vanilla.'},
+    am:{name:'አቮካዶ ስሙዝ',desc:'ክሬሚ አቮካዶ ከማር እና ቫኒላ ጋር።'},
+    or:{name:'Avookaadoo Haadha',desc:'Avookaadoo mi\'aa Itoophiyaa fi dammaa vanila wajjin.'}},
+  {id:8,cat:'soda',price:55,rating:4.2,img:'https://images.unsplash.com/photo-1527960471264-932f39eb5846?w=400&q=75',
+    en:{name:'Coca-Cola',desc:'Ice-cold Coke served with crushed ice and a lemon wedge.'},
+    am:{name:'ኮካ ኮላ',desc:'ቀዝቃዛ ኮካ ኮላ ከሎሚ ቁራጭ ጋር።'},
+    or:{name:'Kooka Koolaa',desc:'Kooka koolaa qorqorroo liimuu wajjin.'}},
+  {id:9,cat:'soda',price:65,rating:4.3,img:'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&q=75',
+    en:{name:'Mineral Water',desc:'Chilled still water sourced from the Ethiopian highlands.'},
+    am:{name:'ሚኔራል ውሃ',desc:'ቀዝቃዛ ሚኔራል ውሃ ከኢትዮጵያ ደጋማ አካባቢ።'},
+    or:{name:'Bishaanı Miinaraalaa',desc:'Bishaan qorraa gaarreen Itoophiyaa irraa argame.'}},
+  {id:10,cat:'meat',price:390,rating:4.9,img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=75',
+    en:{name:'Tibs Firfir',desc:'Sautéed beef tossed with torn injera, herbs and spiced butter.'},
+    am:{name:'ጥብስ ፍርፍር',desc:'ለዛ ያለው የበሬ ጥብስ ከተቀደደ ኢንጀራ እና ቅቤ ጋር።'},
+    or:{name:'Xibs Firfir',desc:'Foon laamuu injara mi\'aa fi budaa itti makame.'}},
+  {id:11,cat:'meat',price:355,rating:4.7,img:'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=400&q=75',
+    en:{name:'Kitfo',desc:'Minced beef with mitmita spice and creamy ayib.'},
+    am:{name:'ክትፎ',desc:'ከምትሚታ ቅመም እና አይብ ጋር የቀረበ ክትፎ።'},
+    or:{name:'Kitfoo',desc:'Foon xiqqeeffame mi\'aa mitmitaa fi ayib wajjin.'}},
+  {id:12,cat:'burger',price:260,rating:4.5,img:'https://images.unsplash.com/photo-1596956470007-2bf6095e7e16?w=400&q=75',
+    en:{name:'Veggie Stacker',desc:'Grilled mushroom, halloumi and pesto on sourdough.'},
+    am:{name:'ቬጂ ስታከር',desc:'የተጠበሰ እንጉዳይ፣ ሃሎሚ እና ፔስቶ።'},
+    or:{name:'Baargara Muduraa',desc:'Mushroom laamuu, halloumi fi pesto irratti.'}},
+];
+
+let lang='en', view='grid', activeCat='all', activeBudget='all', search='', sort='default', loading=true;
+
+// ── Dynamic price ranges ──
+let PRICE_RANGES = [
+  {key:'all',    en:'All',          am:'ሁሉም',   or:'Hunda',   min:null, max:null},
+  {key:'lt100',  en:'< 100 ETB',   am:'< 100 ብር', or:'< 100 ETB', min:0,   max:99},
+  {key:'r100',   en:'100–200 ETB', am:'100–200 ብር',or:'100–200 ETB',min:100, max:200},
+  {key:'gt200',  en:'200+ ETB',    am:'200+ ብር',  or:'200+ ETB', min:201, max:null},
+];
+const PLACEHOLDERS={en:'Search coffee, tea, bakery…',am:'ቡና፣ ሻይ፣ ዳቦ ይፈልጉ…',or:'Bunaa, shaayii barbaadi…'};
+const RESULT_LABELS={en:(n)=>`${n} item${n!==1?'s':''} found`,am:(n)=>`${n} ምግቦች ተገኝተዋል`,or:(n)=>`Nyaata ${n} argame`};
+const EMPTY_LABELS={en:'No items match your filters',am:'ምንም ምግብ አልተገኘም',or:'Nyaata hin argamne'};
+
+// ══ PANELS ══
+function openBiz(){ refreshBizPanel(); document.getElementById('overlay').classList.add('open'); document.getElementById('bizPanel').classList.add('open'); }
+function openAdminPanel(){ fillAdminForms(); renderAdminCats(); renderAdminItems(); document.getElementById('overlay').classList.add('open'); document.getElementById('adminPanel').classList.add('open'); }
+function closeAll(){ document.getElementById('overlay').classList.remove('open'); document.getElementById('bizPanel').classList.remove('open'); document.getElementById('adminPanel').classList.remove('open'); }
+
+// ══ PASSWORD ══
+function openAdmin(){ document.getElementById('pwInput').value=''; document.getElementById('pwErr').textContent=''; document.getElementById('pwInput').classList.remove('error'); document.getElementById('pwModalBg').classList.add('open'); setTimeout(()=>document.getElementById('pwInput').focus(),200); }
+function submitPw(){
+  if(document.getElementById('pwInput').value===ADMIN_PW){ closePwModal(); openAdminPanel(); }
+  else {
+    document.getElementById('pwInput').classList.add('error');
+    document.getElementById('pwErr').textContent='Incorrect password. Try again.';
+    document.getElementById('pwInput').value='';
+    const inp=document.getElementById('pwInput'); inp.style.animation='none'; inp.offsetHeight; inp.style.animation='shake .35s ease';
+  }
+}
+function closePwModal(){ document.getElementById('pwModalBg').classList.remove('open'); pwVisible=false; document.getElementById('pwInput').type='password'; document.getElementById('pwEye').textContent='👁'; }
+function togglePwEye(){ pwVisible=!pwVisible; document.getElementById('pwInput').type=pwVisible?'text':'password'; document.getElementById('pwEye').textContent=pwVisible?'🙈':'👁'; }
+
+// ══ BIZ PANEL ══
+function refreshBizPanel(){
+  document.getElementById('biz-panel-name').textContent=BIZ.name;
+  document.getElementById('biz-phone-d').textContent=BIZ.phone;
+  document.getElementById('biz-address-d').textContent=BIZ.address;
+  document.getElementById('biz-wifi-name-d').textContent=BIZ.wifiName;
+  document.getElementById('biz-wifi-pw-d').textContent=BIZ.wifiPw;
+  document.getElementById('biz-about-d').textContent=BIZ.about;
+  document.getElementById('biz-hours-display').innerHTML=BIZ.hours.map(h=>`<div class="b-row"><div class="b-ico">🕐</div><div><div class="b-lbl">${h.day}</div><div class="b-val">${h.open} – ${h.close}</div></div></div>`).join('');
+  const socs=[];
+  if(BIZ.ig) socs.push(`<button class="soc-btn" onclick="window.open('${BIZ.ig}','_blank')">📸 Instagram</button>`);
+  if(BIZ.fb) socs.push(`<button class="soc-btn" onclick="window.open('${BIZ.fb}','_blank')">📘 Facebook</button>`);
+  if(BIZ.tt) socs.push(`<button class="soc-btn" onclick="window.open('${BIZ.tt}','_blank')">🎵 TikTok</button>`);
+  if(!socs.length) socs.push('<span style="font-size:13px;color:#8a8580">No social links added yet.</span>');
+  document.getElementById('biz-socials-d').innerHTML=socs.join('');
+}
+
+// ══ ADMIN FORMS ══
+function fillAdminForms(){
+  ['name','tagline','about','phone','address'].forEach(k=>document.getElementById('a-'+k).value=BIZ[k]);
+  document.getElementById('a-wifi-name').value=BIZ.wifiName;
+  document.getElementById('a-wifi-pw').value=BIZ.wifiPw;
+  document.getElementById('a-ig').value=BIZ.ig;
+  document.getElementById('a-fb').value=BIZ.fb;
+  document.getElementById('a-tt').value=BIZ.tt;
+  renderHoursEditor();
+}
+function renderHoursEditor(){
+  document.getElementById('hours-editor').innerHTML=BIZ.hours.map((h,i)=>`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:end">
+      <div><label class="form-label">Day</label><input class="form-input" value="${h.day}" oninput="BIZ.hours[${i}].day=this.value" style="padding:8px 10px"/></div>
+      <div><label class="form-label">Open</label><input class="form-input" value="${h.open}" oninput="BIZ.hours[${i}].open=this.value" style="padding:8px 10px"/></div>
+      <div><label class="form-label">Close</label><input class="form-input" value="${h.close}" oninput="BIZ.hours[${i}].close=this.value" style="padding:8px 10px"/></div>
+      <button class="del-btn" onclick="BIZ.hours.splice(${i},1);renderHoursEditor()">✕</button>
+    </div>`).join('')+`<button class="add-btn" onclick="BIZ.hours.push({day:'',open:'',close:''});renderHoursEditor()">＋ Add Hour Row</button>`;
+}
+function saveBiz(){
+  BIZ.name=document.getElementById('a-name').value.trim()||BIZ.name;
+  BIZ.tagline=document.getElementById('a-tagline').value.trim();
+  BIZ.about=document.getElementById('a-about').value.trim();
+  BIZ.phone=document.getElementById('a-phone').value.trim();
+  BIZ.address=document.getElementById('a-address').value.trim();
+  BIZ.wifiName=document.getElementById('a-wifi-name').value.trim();
+  BIZ.wifiPw=document.getElementById('a-wifi-pw').value.trim();
+  BIZ.ig=document.getElementById('a-ig').value.trim();
+  BIZ.fb=document.getElementById('a-fb').value.trim();
+  BIZ.tt=document.getElementById('a-tt').value.trim();
+  document.getElementById('hdr-name').textContent=BIZ.name;
+  document.getElementById('hdr-logo-char').textContent=BIZ.name.charAt(0).toUpperCase();
+  showToast('Business info saved ✓');
+}
+function switchTab(tab){
+  document.querySelectorAll('.atab').forEach((b,i)=>{b.classList.toggle('active',['biz','cats','items','prices','ratings'][i]===tab)});
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='prices') renderPriceRangeEditor();
+  if(tab==='ratings') renderRatingsEditor();
+}
+
+// ══ CATEGORIES ADMIN ══
+function renderAdminCats(){
+  document.getElementById('admin-cat-list').innerHTML=CATS.filter(c=>c.key!=='all').map((c,i)=>`
+    <div class="cat-admin-item">
+      <div class="cat-admin-row">
+        <span class="cat-drag">⠿</span>
+        <input class="cat-name-input" value="${c.en}" placeholder="English name" oninput="CATS[${i+1}].en=this.value"/>
+        <button class="del-btn" onclick="delCat(${i+1})">✕</button>
+      </div>
+      <div class="cat-sub-row">
+        <input class="cat-lang-input" value="${c.am}" placeholder="አማርኛ" oninput="CATS[${i+1}].am=this.value" style="font-family:'Noto Sans Ethiopic',sans-serif"/>
+        <input class="cat-lang-input" value="${c.or||''}" placeholder="Afaan Oromoo" oninput="CATS[${i+1}].or=this.value"/>
+      </div>
+    </div>`).join('');
+}
+function addCat(){ const key='cat_'+Date.now(); CATS.push({key,en:'New Category',am:'አዲስ ምድብ',or:'Sadarkaa Haaraa'}); renderAdminCats(); }
+function delCat(i){ if(CATS.length<=2){showToast('Need at least one category');return;} const key=CATS[i].key; CATS.splice(i,1); MENU.forEach(m=>{if(m.cat===key)m.cat=CATS[1].key;}); renderAdminCats(); }
+function saveCats(){ renderCats(); renderAdminItems(); showToast('Categories saved ✓'); if(!loading)render(); }
+
+// ══ ITEMS ADMIN ══
+function renderAdminItems(){
+  const catOpts=CATS.filter(c=>c.key!=='all').map(c=>`<option value="${c.key}">${c.en}</option>`).join('');
+  document.getElementById('admin-item-list').innerHTML=MENU.map((item)=>`
+    <div class="item-admin-card" id="iac-${item.id}">
+      <div class="item-admin-top">
+        <img class="item-thumb" src="${item.img}" onerror="this.style.background='#e4e0d8'" alt=""/>
+        <div style="flex:1;min-width:0">
+          <div class="item-admin-name">${item.en.name}</div>
+          <div class="item-admin-cat">${catLabel(item.cat)} · ${item.price} ETB · ⭐ ${item.rating}</div>
+        </div>
+        <button class="item-expand-btn" id="ieb-${item.id}" onclick="toggleItemForm(${item.id})">▾</button>
+      </div>
+      <div class="item-admin-form" id="iaf-${item.id}">
+
+        <!-- PHOTO UPLOAD -->
+        <div class="form-label">Item Photo</div>
+        <div id="photo-preview-${item.id}">
+          ${item.img ? `<div class="photo-preview-wrap" style="width:100%"><img class="photo-preview" src="${item.img}" id="prev-img-${item.id}" alt=""/><button class="photo-remove-btn" onclick="removePhoto(${item.id})" title="Remove photo">✕</button></div>` : ''}
+        </div>
+        <div class="photo-upload-area" id="upload-area-${item.id}" ${item.img?'style="display:none"':''}>
+          <input type="file" accept="image/*" onchange="handlePhotoUpload(event,${item.id})"/>
+          <span class="upload-icon">📷</span>
+          <div class="upload-text">Tap to upload a photo</div>
+          <div class="upload-sub">JPG, PNG, WEBP — max 5MB</div>
+        </div>
+        <div class="form-group" style="margin-top:10px"><label class="form-label">Or paste Image URL</label><input class="form-input" id="ie-img-${item.id}" value="${item.img}" placeholder="https://..." oninput="updateImgFromUrl(${item.id},this.value)"/></div>
+
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name (EN)</label><input class="form-input" id="ie-en-name-${item.id}" value="${item.en.name}"/></div>
+          <div class="form-group"><label class="form-label">Price (ETB)</label><input class="form-input" type="number" id="ie-price-${item.id}" value="${item.price}"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Description (EN)</label><input class="form-input" id="ie-en-desc-${item.id}" value="${item.en.desc}"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name (አማ)</label><input class="form-input" id="ie-am-name-${item.id}" value="${item.am.name}" style="font-family:'Noto Sans Ethiopic',sans-serif"/></div>
+          <div class="form-group"><label class="form-label">Desc (አማ)</label><input class="form-input" id="ie-am-desc-${item.id}" value="${item.am.desc}" style="font-family:'Noto Sans Ethiopic',sans-serif"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name (OM)</label><input class="form-input" id="ie-or-name-${item.id}" value="${(item.or||{}).name||''}"/></div>
+          <div class="form-group"><label class="form-label">Desc (OM)</label><input class="form-input" id="ie-or-desc-${item.id}" value="${(item.or||{}).desc||''}"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Rating (0–5)</label><input class="form-input" type="number" step="0.1" min="0" max="5" id="ie-rating-${item.id}" value="${item.rating}"/></div>
+          <div class="form-group"><label class="form-label">Category</label><select class="cat-sel" id="ie-cat-${item.id}">${catOpts}</select></div>
+        </div>
+        <button class="save-btn amber" onclick="saveItem(${item.id})">Save Item</button>
+        <button class="danger-btn" onclick="deleteItem(${item.id})">Delete Item</button>
+      </div>
+    </div>`).join('');
+  MENU.forEach(item=>{ const sel=document.getElementById('ie-cat-'+item.id); if(sel) sel.value=item.cat; });
+}
+
+// ── Photo handlers ──
+function handlePhotoUpload(event, id){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(file.size > 5*1024*1024){ showToast('Photo too large — max 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const dataUrl = e.target.result;
+    const idx = MENU.findIndex(m=>m.id===id);
+    if(idx>=0) MENU[idx].img = dataUrl;
+    // update preview
+    document.getElementById('photo-preview-'+id).innerHTML=`<div class="photo-preview-wrap" style="width:100%"><img class="photo-preview" src="${dataUrl}" id="prev-img-${id}" alt=""/><button class="photo-remove-btn" onclick="removePhoto(${id})" title="Remove photo">✕</button></div>`;
+    document.getElementById('upload-area-'+id).style.display='none';
+    document.getElementById('ie-img-'+id).value='';
+    // update thumb
+    const thumb = document.querySelector(`#iac-${id} .item-thumb`);
+    if(thumb) thumb.src = dataUrl;
+    showToast('Photo uploaded ✓');
+    if(!loading) render();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(id){
+  const idx = MENU.findIndex(m=>m.id===id);
+  if(idx>=0) MENU[idx].img='';
+  document.getElementById('photo-preview-'+id).innerHTML='';
+  document.getElementById('upload-area-'+id).style.display='';
+  document.getElementById('ie-img-'+id).value='';
+  const thumb = document.querySelector(`#iac-${id} .item-thumb`);
+  if(thumb){ thumb.src=''; thumb.style.background='#e4e0d8'; }
+  showToast('Photo removed');
+  if(!loading) render();
+}
+
+function updateImgFromUrl(id, url){
+  document.getElementById('ie-img-'+id).value=url;
+  if(url){
+    document.getElementById('photo-preview-'+id).innerHTML=`<div class="photo-preview-wrap" style="width:100%"><img class="photo-preview" src="${url}" id="prev-img-${id}" alt=""/><button class="photo-remove-btn" onclick="removePhoto(${id})" title="Remove photo">✕</button></div>`;
+    document.getElementById('upload-area-'+id).style.display='none';
+  } else {
+    document.getElementById('photo-preview-'+id).innerHTML='';
+    document.getElementById('upload-area-'+id).style.display='';
+  }
+}
+
+function toggleItemForm(id){ const form=document.getElementById('iaf-'+id); const btn=document.getElementById('ieb-'+id); const open=form.classList.toggle('open'); btn.classList.toggle('open',open); }
+
+function saveItem(id){
+  const i=MENU.findIndex(m=>m.id===id); if(i<0)return;
+  const imgUrl = document.getElementById('ie-img-'+id).value.trim();
+  if(imgUrl) MENU[i].img=imgUrl;
+  MENU[i].en.name=document.getElementById('ie-en-name-'+id).value;
+  MENU[i].en.desc=document.getElementById('ie-en-desc-'+id).value;
+  MENU[i].am.name=document.getElementById('ie-am-name-'+id).value;
+  MENU[i].am.desc=document.getElementById('ie-am-desc-'+id).value;
+  if(!MENU[i].or) MENU[i].or={name:'',desc:''};
+  MENU[i].or.name=document.getElementById('ie-or-name-'+id).value;
+  MENU[i].or.desc=document.getElementById('ie-or-desc-'+id).value;
+  MENU[i].price=parseFloat(document.getElementById('ie-price-'+id).value)||0;
+  MENU[i].rating=parseFloat(document.getElementById('ie-rating-'+id).value)||5;
+  MENU[i].cat=document.getElementById('ie-cat-'+id).value;
+  renderAdminItems(); showToast('Item saved ✓'); if(!loading)render();
+}
+function deleteItem(id){ if(!confirm('Delete this item?')) return; MENU=MENU.filter(m=>m.id!==id); renderAdminItems(); showToast('Item deleted'); if(!loading)render(); }
+function addItem(){
+  const newId=Date.now();
+  MENU.unshift({id:newId,cat:CATS[1]?.key||'coffee',price:100,rating:4.5,img:'',
+    en:{name:'New Item',desc:'Describe this item.'},
+    am:{name:'አዲስ ምግብ',desc:'ይህን ምግብ ይግለጹ።'},
+    or:{name:'Nyaata Haaraa',desc:'Nyaata kana ibsi.'}});
+  renderAdminItems();
+  setTimeout(()=>toggleItemForm(newId),100);
+  showToast('New item added — fill in details');
+}
+
+// ══ PRICE RANGES ADMIN ══
+function renderPriceRangeEditor(){
+  document.getElementById('price-range-editor').innerHTML = PRICE_RANGES.map((r,i)=>`
+    <div class="cat-admin-item" style="margin-bottom:10px" id="pre-${i}">
+      <div class="cat-admin-row" style="margin-bottom:8px">
+        <span class="cat-drag">⠿</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10px;font-weight:600;color:#c8963e;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Range Label (EN)</div>
+          <input class="cat-name-input" style="background:#fff;border:.5px solid #e4e0d8;border-radius:7px;padding:5px 8px;width:100%" value="${r.en}" placeholder="e.g. Under 100 ETB" oninput="PRICE_RANGES[${i}].en=this.value"/>
+        </div>
+        ${r.key==='all'?'<span style="font-size:10px;color:#c0bbb5;flex-shrink:0;padding-right:4px;white-space:nowrap">locked</span>':`<button class="del-btn" onclick="deletePriceRange(${i})" title="Delete range">✕</button>`}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-size:10px;font-weight:600;color:#6b6560;margin-bottom:4px">Min ETB${r.key==='all'?' (ignored)':''}</div>
+          <input class="form-input" type="number" min="0" placeholder="0" style="padding:7px 10px;font-size:12px" value="${r.min===null?'':r.min}" ${r.key==='all'?'disabled':''}  oninput="PRICE_RANGES[${i}].min=this.value===''?null:parseFloat(this.value)"/>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:#6b6560;margin-bottom:4px">Max ETB${r.key==='all'?' (ignored)':''}</div>
+          <input class="form-input" type="number" min="0" placeholder="no limit" style="padding:7px 10px;font-size:12px" value="${r.max===null?'':r.max}" ${r.key==='all'?'disabled':''} oninput="PRICE_RANGES[${i}].max=this.value===''?null:parseFloat(this.value)"/>
+        </div>
+      </div>
+      <div class="cat-sub-row">
+        <input class="cat-lang-input" value="${r.am||''}" placeholder="አማርኛ ስም" style="font-family:'Noto Sans Ethiopic',sans-serif" oninput="PRICE_RANGES[${i}].am=this.value"/>
+        <input class="cat-lang-input" value="${r.or||''}" placeholder="Afaan Oromoo" oninput="PRICE_RANGES[${i}].or=this.value"/>
+      </div>
+    </div>`).join('');
+}
+function addPriceRange(){
+  PRICE_RANGES.push({key:'pr_'+Date.now(),en:'New Range',am:'አዲስ ክልል',or:'Daangaa Haaraa',min:0,max:null});
+  renderPriceRangeEditor();
+  showToast('Price range added');
+}
+function deletePriceRange(i){
+  if(PRICE_RANGES[i].key==='all'){showToast('Cannot delete the "All" range');return;}
+  if(!confirm('Delete this price range?')) return;
+  PRICE_RANGES.splice(i,1);
+  renderPriceRangeEditor();
+  showToast('Price range deleted');
+}
+function savePriceRanges(){
+  renderBudget();
+  showToast('Price ranges saved ✓');
+  if(!loading) render();
+}
+
+// ══ RATINGS ADMIN ══
+function renderRatingsEditor(){
+  if(!MENU.length){
+    document.getElementById('ratings-editor').innerHTML='<div style="text-align:center;color:#8a8580;font-size:13px;padding:24px 0">No menu items yet.</div>';
+    return;
+  }
+  document.getElementById('ratings-editor').innerHTML = MENU.map((item,i)=>`
+    <div class="cat-admin-item" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        ${item.img?`<img src="${item.img}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.background='#e4e0d8';this.removeAttribute('src')"/>`:`<div style="width:40px;height:40px;border-radius:8px;background:#e4e0d8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🍽️</div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.en.name}</div>
+          <div style="font-size:11px;color:#8a8580">${catLabel(item.cat)} · ${item.price} ETB</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <span style="color:#c8963e;font-size:14px">★</span>
+          <input type="number" step="0.1" min="0" max="5"
+            id="rr-${item.id}"
+            value="${item.rating}"
+            style="width:58px;padding:6px 8px;background:#fff;border:1.5px solid #e4e0d8;border-radius:8px;font-size:13px;font-weight:600;color:#1a1a1a;outline:none;text-align:center;font-family:'Plus Jakarta Sans',sans-serif"
+            onfocus="this.style.borderColor='#c8963e'"
+            onblur="this.style.borderColor='#e4e0d8'"
+          />
+        </div>
+        <button class="del-btn" style="flex-shrink:0" onclick="deleteItemFromRatings(${item.id})" title="Delete item">✕</button>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:.5px solid #e4e0d8">
+        <div style="display:flex;gap:4px;justify-content:flex-end">
+          ${[1,2,3,4,5].map(s=>`<button onclick="setStarRating(${item.id},${s})" style="width:28px;height:28px;border-radius:6px;border:1.5px solid ${Math.round(item.rating)>=s?'#c8963e':'#e4e0d8'};background:${Math.round(item.rating)>=s?'#faf0da':'#fff'};cursor:pointer;font-size:14px;transition:all .15s" id="star-${item.id}-${s}">★</button>`).join('')}
+          <span style="font-size:10px;color:#b0aba6;align-self:center;margin-left:4px">quick set</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function setStarRating(id, stars){
+  const input = document.getElementById('rr-'+id);
+  if(input) input.value = stars;
+  const idx = MENU.findIndex(m=>m.id===id);
+  if(idx>=0){ MENU[idx].rating=stars; renderRatingsEditor(); if(!loading)render(); showToast('Rating updated ✓'); }
+}
+function deleteItemFromRatings(id){
+  if(!confirm('Delete this item from the menu?')) return;
+  MENU = MENU.filter(m=>m.id!==id);
+  renderRatingsEditor();
+  renderAdminItems();
+  showToast('Item deleted');
+  if(!loading) render();
+}
+function saveAllRatings(){
+  MENU.forEach(item=>{
+    const input = document.getElementById('rr-'+item.id);
+    if(input){
+      const val = parseFloat(input.value);
+      if(!isNaN(val)) item.rating = Math.min(5, Math.max(0, val));
+    }
+  });
+  showToast('All ratings saved ✓');
+  if(!loading) render();
+}
+
+// ══ LANGUAGE ══
+function catLabel(k){ const c=CATS.find(x=>x.key===k); return c?(c[lang]||c.en):k; }
+function T(item,f){ return (item[lang]&&item[lang][f])||(item.en&&item.en[f])||''; }
+
+function renderCats(){
+  document.getElementById('catsRow').innerHTML=CATS.map(c=>
+    `<button class="cchip${c.key===activeCat?' active':''}" onclick="setCat('${c.key}')">${c[lang]||c.en}</button>`
+  ).join('');
+}
+function renderBudget(){
+  document.getElementById('budgetRow').innerHTML = PRICE_RANGES.map(r=>
+    `<button class="bchip${r.key===activeBudget?' active':''}" onclick="setBudget('${r.key}')">${r[lang]||r.en}</button>`
+  ).join('');
+}
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-seg').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
+  document.getElementById('searchBox').placeholder=PLACEHOLDERS[l]||PLACEHOLDERS.en;
+  renderCats(); renderBudget(); if(!loading)render();
+}
+
+// ══ FILTERS ══
+function setCat(k){ activeCat=k; renderCats(); if(!loading)render(); }
+function setBudget(k){ activeBudget=k; renderBudget(); if(!loading)render(); }
+function handleSearch(v){ search=v.toLowerCase(); if(!loading)render(); }
+function applySort(v){ sort=v; if(!loading)render(); }
+function setView(v){ view=v; document.getElementById('vG').classList.toggle('active',v==='grid'); document.getElementById('vL').classList.toggle('active',v==='list'); if(!loading)render(); }
+
+function getFiltered(){
+  let items=[...MENU];
+  if(activeCat!=='all') items=items.filter(i=>i.cat===activeCat);
+  if(activeBudget!=='all'){
+    const range = PRICE_RANGES.find(r=>r.key===activeBudget);
+    if(range){
+      if(range.min!==null) items=items.filter(i=>i.price>=range.min);
+      if(range.max!==null) items=items.filter(i=>i.price<=range.max);
+    }
+  }
+  if(search) items=items.filter(i=>(T(i,'name')||'').toLowerCase().includes(search)||(T(i,'desc')||'').toLowerCase().includes(search));
+  if(sort==='price_asc') items.sort((a,b)=>a.price-b.price);
+  if(sort==='price_desc') items.sort((a,b)=>b.price-a.price);
+  if(sort==='rating') items.sort((a,b)=>b.rating-a.rating);
+  return items;
+}
+
+// ══ CARDS ══
+function noImgBg(){ return 'background:#f0ede6;display:flex;align-items:center;justify-content:center;font-size:32px'; }
+
+function gCard(item){ return `<div class="gc">
+  <div class="giw">${item.img?`<img class="gi" src="${item.img}" alt="${T(item,'name')}" loading="lazy"/>`:`<div style="position:absolute;inset:0;${noImgBg()}">🍽️</div>`}<span class="gptag">${item.price} ETB</span></div>
+  <div class="gbody">
+    <div class="gname">${T(item,'name')}</div>
+    <div class="gdesc">${T(item,'desc')}</div>
+    <div class="gfoot"><span class="gprice">${item.price}<span class="getb"> ETB</span></span><span class="gstar"><span class="star-c">★</span> ${item.rating}</span></div>
+  </div></div>`; }
+
+function lCard(item){ return `<div class="lc">
+  <div class="liw">
+    ${item.img?`<img class="limg" src="${item.img}" alt="${T(item,'name')}" loading="lazy"/>`:`<div style="width:100%;height:190px;${noImgBg()}">🍽️</div>`}
+    <span class="l-price-tag">${item.price} ETB</span>
+    <span class="l-cat-tag-img">${catLabel(item.cat)}</span>
+  </div>
+  <div class="lbody">
+    <div><div class="lname">${T(item,'name')}</div><div class="ldesc">${T(item,'desc')}</div></div>
+    <div class="lfoot">
+      <span class="lprice">${item.price}<span class="letb"> ETB</span></span>
+      <span class="gstar"><span class="star-c">★</span> ${item.rating}</span>
+    </div>
+  </div></div>`; }
+
+function skeleton(){
+  if(view==='grid') return `<div class="gwrap">${Array(6).fill(`<div class="gc"><div class="sk" style="padding-top:70%"></div><div style="padding:9px 10px 11px"><div class="sk skl"></div><div class="sk skl" style="width:65%"></div><div class="sk skl" style="width:40%"></div></div></div>`).join('')}</div>`;
+  return `<div class="lwrap">${Array(3).fill(`<div class="lc"><div style="width:100%;height:190px" class="sk"></div><div style="padding:12px 14px 14px"><div class="sk skl"></div><div class="sk skl" style="width:75%"></div><div class="sk skl" style="width:40%;margin-top:10px"></div></div></div>`).join('')}</div>`;
+}
+
+function render(){
+  const items=getFiltered();
+  const lbl=RESULT_LABELS[lang]||RESULT_LABELS.en;
+  document.getElementById('rcount').textContent=lbl(items.length);
+  if(!items.length){ document.getElementById('menuWrap').innerHTML=`<div class="empty"><span>🍽️</span>${EMPTY_LABELS[lang]||EMPTY_LABELS.en}</div>`; return; }
+  document.getElementById('menuWrap').innerHTML=view==='grid'?`<div class="gwrap">${items.map(gCard).join('')}</div>`:`<div class="lwrap">${items.map(lCard).join('')}</div>`;
+}
+
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+function init(){ renderCats(); renderBudget(); document.getElementById('menuWrap').innerHTML=skeleton(); setTimeout(()=>{loading=false;render();},900); }
+init();
+</script>
+</body>
+</html>
